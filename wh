@@ -1,0 +1,52 @@
+import discord
+import random
+import string
+from discord.ext import commands
+
+# Replace this with your role ID
+BUYER_ROLE_ID = 1308653607679426590
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.guilds = True
+intents.message_content = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Function to generate a random key
+def generate_key():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
+
+# Log function to save the keys
+def log_key(user_name, key):
+    with open("whitelist_keys.log", "a") as log_file:
+        log_file.write(f"{user_name}: {key}\n")
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
+
+@bot.command(name="check_whitelist")
+async def check_whitelist(ctx, user: discord.Member):
+    # Check if the user has the "buyer" role
+    if any(role.id == BUYER_ROLE_ID for role in user.roles):
+        await ctx.send(f"{user.name} is whitelisted.")
+    else:
+        await ctx.send(f"{user.name} is unwhitelisted.")
+
+@bot.command(name="give_key")
+async def give_key(ctx, user: discord.Member):
+    # Generate a random key
+    key = generate_key()
+    
+    # DM the key to the user
+    try:
+        await user.send(f"Here is your whitelist key: {key}")
+        # Log the key to a file
+        log_key(user.name, key)
+        await ctx.send(f"A key has been sent to {user.name}.")
+    except discord.errors.Forbidden:
+        await ctx.send(f"Could not send a DM to {user.name}. They may have DMs disabled.")
+
+# Start the bot with your token
+bot.run("MTMwODM4NDI3NDQ0NDk4MDI1NQ.Gg-Zxv.-91Z-7VSwmalVNbfg_DJ1UKo2yI0IV9xYjQxAE")
